@@ -12,221 +12,192 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
     
     lazy var collectionView : UICollectionView = {
         let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
+        layout.minimumLineSpacing = 10
+        layout.minimumLineSpacing = 10
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .white
         collectionView.dataSource = self
         collectionView.delegate = self
         return collectionView
     }()
+    
+    let additionButton : UIButton = {
+        let button = UIButton(frame: .zero)
+        button.setTitle("Addition", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        return button
+    }()
+    
+    let subtractionButton : UIButton = {
+        let button = UIButton(frame: .zero)
+        button.setTitle("Subtraction", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        return button
+    }()
+    
+    private var additionModel = AchievementModel(achievement: Achievement.addition)
+    private var subtractionModel = AchievementModel(achievement: Achievement.subtraction)
+    private lazy var additionCellModel = CellModel(achievementModel: self.additionModel)
+    private lazy var subtractionCellModel = CellModel(achievementModel: self.subtractionModel)
+    private var additionGamesWon : Int = 0
+    private var subtractionGamesWon : Int = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
+        self.view.addSubview(additionButton)
+        additionButton.anchor(top: self.view.safeAreaLayoutGuide.topAnchor, leading: self.view.leadingAnchor, bottom: nil, trailing: nil,
+                              size: .init(width: self.view.frame.width / 2, height: 100))
+        additionButton.addTarget(self, action: #selector(additionGame), for: .touchUpInside)
+        
+        self.view.addSubview(subtractionButton)
+        subtractionButton.anchor(top: self.view.safeAreaLayoutGuide.topAnchor, leading: self.additionButton.trailingAnchor, bottom: nil, trailing: self.view.trailingAnchor,
+                                 size: .init(width: 0, height: 100))
+        subtractionButton.addTarget(self, action: #selector(subtractionGame), for: .touchUpInside)
+        
         self.view.addSubview(collectionView)
-        collectionView.anchor(top: self.view.safeAreaLayoutGuide.topAnchor, leading: self.view.leadingAnchor, bottom: self.view.bottomAnchor, trailing: self.view.trailingAnchor)
-        collectionView.register(TopCell.self, forCellWithReuseIdentifier: "topCell")
+        collectionView.anchor(top: self.additionButton.bottomAnchor, leading: self.view.leadingAnchor, bottom: self.view.bottomAnchor, trailing: self.view.trailingAnchor)
+        collectionView.register(Cell.self, forCellWithReuseIdentifier: "cell")
+    }
+    
+    @objc func additionGame (sender: UIButton) {
+        self.additionGamesWon += 1
+        self.additionModel.games = self.additionGamesWon
+        self.additionCellModel.update(additionModel)
+        collectionView.reloadData()
+    }
+    
+    @objc func subtractionGame (sender: UIButton) {
+        self.subtractionGamesWon += 1
+        self.subtractionModel.games = self.subtractionGamesWon
+        self.subtractionCellModel.update(subtractionModel)
+        collectionView.reloadData()
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 1
+        return 2
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "topCell", for: indexPath) as! TopCell
-        return cell
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: self.collectionView.frame.size.width, height: self.collectionView.frame.size.height)
-    }
-
-}
-
-class BaseCell : UICollectionViewCell {
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupViews()
-    }
-    
-    func setupViews() { }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-}
-
-class TopCell: BaseCell, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, ButtonCellDelegate {
-    
-    var model = "Text"
-    
-    lazy var collectionView : UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.backgroundColor = .white
-        collectionView.dataSource = self
-        collectionView.delegate = self
-        return collectionView
-    }()
-    
-    override func setupViews() {
-        super.setupViews()
-        self.backgroundColor = .green
-        self.addSubview(collectionView)
-        collectionView.anchor(top: self.topAnchor, leading: self.leadingAnchor, bottom: self.bottomAnchor, trailing: self.trailingAnchor)
-        collectionView.register(ButtonsCell.self, forCellWithReuseIdentifier: "buttonsCell")
-        collectionView.register(InnerCollectionViewCell.self, forCellWithReuseIdentifier: "cvCell")
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 3
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! Cell
         if indexPath.item == 0 {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "buttonsCell", for: indexPath) as! ButtonsCell
-            cell.buttonCellDelegate = self
-            return cell
+            cell.configure(with: self.additionCellModel)
+        } else {
+            cell.configure(with: self.subtractionCellModel)
         }
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cvCell", for: indexPath) as! InnerCollectionViewCell
-        cell.model = self.model
+        cell.backgroundColor = .green
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: self.frame.width, height: 150)
+        return CGSize(width: self.collectionView.frame.size.width, height: 100)
     }
+
+}
+
+// This are the achievement types that you want, you can add as many as you like.
+public enum Achievement {
+    case addition, subtraction
+}
+
+// The model for the achievement, this sets the number of games won and the type of achievement
+struct AchievementModel {
+    var achievement : Achievement
     
-    func didPressButton(sender: String) {
-        
-        switch sender {
-        case "buttonOne":
-            self.model = "Text"
-            self.collectionView.reloadData()
-        case "buttonTwo":
-            self.model = "New Text"
-            self.collectionView.reloadData()
-        default:
-            break
-        }
-        
-        
+    var games : Int = 0
+
+    init (achievement: Achievement) {
+        self.achievement = achievement
     }
 }
 
-// Protocol for buttons
-
-protocol ButtonCellDelegate : class { func didPressButton (sender: String) }
-
-// Buttons Cell
-
-class ButtonsCell : BaseCell {
-    
-    weak var buttonCellDelegate : ButtonCellDelegate?
-    
-    let buttonOne : UIButton = {
-        let button = UIButton(frame: .zero)
-        button.setTitle("Button 1", for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        return button
-    }()
-    
-    let buttonTwo : UIButton = {
-        let button = UIButton(frame: .zero)
-        button.setTitle("Button 2", for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        return button
-    }()
-    
-    override func setupViews() {
-        super.setupViews()
-        self.addSubview(buttonOne)
-        buttonOne.anchor(top: self.topAnchor, leading: self.leadingAnchor, bottom: self.bottomAnchor, trailing: nil, size: .init(width: self.frame.width / 2, height: 0))
-        buttonOne.addTarget(self, action: #selector(buttonOnePressed), for: .touchUpInside)
-        self.addSubview(buttonTwo)
-        buttonTwo.anchor(top: self.topAnchor, leading: buttonOne.trailingAnchor, bottom: self.bottomAnchor, trailing: self.trailingAnchor)
-        buttonTwo.addTarget(self, action: #selector(buttonTwoPressed), for: .touchUpInside)
-    }
-    
-    @objc func buttonTwoPressed (sender: UIButton) {
-        self.buttonCellDelegate?.didPressButton(sender: "buttonTwo")
-    }
-    
-    @objc func buttonOnePressed (sender: UIButton) {
-        self.buttonCellDelegate?.didPressButton(sender: "buttonOne")
-    }
-}
-
-// Mark
-
-class InnerCollectionViewCell : BaseCell, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
-    
-    var model : String? {
+// Cell model. Updates the label when needed and depends on the achievement
+struct CellModel {
+    private var achievementModel : AchievementModel {
         didSet {
-            self.collectionView.reloadData()
+            self.setAchievementLabel()
         }
     }
-
-    lazy var collectionView : UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.backgroundColor = .red
-        collectionView.dataSource = self
-        collectionView.delegate = self
-        return collectionView
-    }()
+    var achievementText : String = ""
+    var numberOfGames : Int = 0
+    // Change the milestones here as you want
+    private let milestones = [10, 15, 20]
+    private var currentIndex : Int
     
-    override func setupViews() {
-        super.setupViews()
-        self.addSubview(collectionView)
-        collectionView.anchor(top: self.topAnchor, leading: self.leadingAnchor, bottom: self.bottomAnchor, trailing: self.trailingAnchor)
-        collectionView.register(InnerCollectionViewSubCell.self, forCellWithReuseIdentifier: "innerCell")
+    init(achievementModel: AchievementModel) {
+        self.achievementModel = achievementModel
+        self.currentIndex = 0
+        setAchievementLabel()
     }
     
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 3
+    mutating func update (_ achievementModel: AchievementModel) {
+        if self.milestones.contains(achievementModel.games) {
+            self.achievementModel = achievementModel
+        }
+        self.numberOfGames = achievementModel.games
     }
     
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "innerCell", for: indexPath) as! InnerCollectionViewSubCell
-        cell.model = self.model
-        return cell
+    private mutating func setAchievementLabel () {
+        switch self.achievementModel.achievement {
+        case .addition:
+            self.achievementText = "Win \(self.milestones[self.currentIndex]) games in Addition Mode"
+            if currentIndex < self.milestones.count - 1 { self.currentIndex += 1 }
+        case .subtraction:
+            self.achievementText = "Win \(self.milestones[self.currentIndex]) games in Subtraction Mode"
+            if currentIndex < self.milestones.count - 1 { self.currentIndex += 1 }
+        }
     }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: 100, height: 100)
-    }
-    
 }
 
-// Mark
+// A protocol to cofigure the cell
+protocol ConfigurableCell: class {
+    func configure(with cellModel: CellModel)
+}
 
-class InnerCollectionViewSubCell : BaseCell {
+// A collection view cell that can be configured with a cell model
+class Cell : UICollectionViewCell, ConfigurableCell {
     
-    var model : String? {
-        didSet { label.text = model }
-    }
-    
-    let label : UILabel = {
+    private let label : UILabel = {
         let label = UILabel(frame: .zero)
         label.textColor = .black
         label.textAlignment = .center
         return label
     }()
     
-    override func setupViews() {
-        super.setupViews()
-        self.addSubview(label)
-        label.anchor(top: self.topAnchor, leading: self.leadingAnchor, bottom: self.bottomAnchor, trailing: self.trailingAnchor)
+    private let numberLabel : UILabel = {
+        let label = UILabel(frame: .zero)
+        label.textColor = .black
+        label.textAlignment = .center
+        label.text = "0"
+        return label
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupViews()
     }
+    
+    func setupViews() {
+        self.addSubview(label)
+        label.anchor(top: self.topAnchor, leading: self.leadingAnchor, bottom: nil, trailing: self.trailingAnchor, size: .init(width: 0, height: 50))
+        self.addSubview(numberLabel)
+        numberLabel.anchor(top: self.label.bottomAnchor, leading: self.leadingAnchor, bottom: self.bottomAnchor, trailing: self.trailingAnchor)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func configure(with cellModel: CellModel) {
+        self.label.text = cellModel.achievementText
+        self.numberLabel.text = String(cellModel.numberOfGames)
+    }
+    
 }
 
-// Extensions
 
+// Extensions
 extension UIView {
     func anchor(top: NSLayoutYAxisAnchor?, leading: NSLayoutXAxisAnchor?, bottom: NSLayoutYAxisAnchor?, trailing: NSLayoutXAxisAnchor?, padding: UIEdgeInsets = .zero, size: CGSize = .zero) {
         translatesAutoresizingMaskIntoConstraints = false
